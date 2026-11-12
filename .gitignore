@@ -1,0 +1,50 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Salida de compilación (TypeScript / Build)
+dist/
+build/
+*.tsbuildinfo
+
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Logs y diagnósticos
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Testing y cobertura
+coverage/
+.nyc_output/
+
+# Cachés y archivos temporales
+.npm
+.eslintcache
+.cache/
+tmp/
+temp/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editores e IDEs
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
