@@ -21,16 +21,21 @@
   "packageManager": "pnpm@12.18.0",
   "type": "module",
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.6",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.11.0",
     "colors": "^1.4.0",
     "dotenv": "^18.0.10",
     "env-var": "^7.5.0",
     "express": "^5.3.0",
-    "mongoose": "^9.12.1"
+    "jose": "^6.2.17",
+    "mongoose": "^9.12.1",
+    "resend": "^6.38.0"
   }
 }
