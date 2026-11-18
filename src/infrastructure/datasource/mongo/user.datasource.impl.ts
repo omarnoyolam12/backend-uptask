@@ -14,8 +14,27 @@ export class UserMongoDatasourceImpl implements UserDatasource {
         private readonly passwordHasher: PasswordHasher,
     ){}
 
-    create(dto: CreateUserDto): Promise<UserEntity> {
-        throw new Error("Method not implemented.");
+    async create(dto: CreateUserDto): Promise<UserEntity> {
+        const emailExists = await this.findByEmail(dto.email);
+        if (emailExists) {
+            throw CustomError.badRequest("Email ya registrado");
+        }
+
+        const usernameExists = await this.findByUsername(dto.username);
+        if (usernameExists) {
+            throw CustomError.badRequest("Nombre de usuario ya registrado");
+        }
+
+        const hashedPassword = await this.passwordHasher.hash(dto.password);
+
+        const user = await UserModel.create({
+            name: dto.name,
+            username: dto.username,
+            email: dto.email,
+            password: hashedPassword,
+        });
+
+        return UserEntity.fromObject(user.toObject());
     }
     
     async getById(id: string): Promise<UserEntity> {
@@ -75,7 +94,7 @@ export class UserMongoDatasourceImpl implements UserDatasource {
             throw CustomError.badRequest("ID de usuario no válido");
         }
 
-        const user = await UserModel.findById(id).lean();
+        const user = await UserModel.findById(id).select('+password').lean();
         if (!user) {
             throw CustomError.notFound("Usuario no encontrado");
         }
