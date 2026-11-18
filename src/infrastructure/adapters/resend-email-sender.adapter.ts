@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { EmailSender, SendEmailOptions } from '../../domain/adapters/email-sender.adapter';
+import { confirmationCodeTemplate } from '../email/templates/confirmation-code.template';
 
 export interface ResendEmailSenderOptions {
     apiKey: string;
@@ -26,6 +27,16 @@ export class ResendEmailSender implements EmailSender {
         if (error) {
             throw new Error(`Failed to send email: ${error.message}`);
         }
+    }
+
+    async sendConfirmationEmail(to: string, name: string, code: string): Promise<void> {
+        const html = confirmationCodeTemplate({ name, code });
+
+        await this.send({
+            to,
+            subject: 'Confirma tu cuenta en UpTask',
+            html,
+        });
     }
 }
 
