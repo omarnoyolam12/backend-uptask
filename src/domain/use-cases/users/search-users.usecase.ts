@@ -1,6 +1,6 @@
+import { UserRepository } from "../../repositories";
 import { SearchUserDto } from "../../dtos/users";
 import { UserSummaryEntity } from "../../entities/users";
-import { UserRepository } from "../../repositories/user.repository";
 
 
 export interface SearchUsersUseCase {

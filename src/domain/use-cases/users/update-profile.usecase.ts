@@ -1,5 +1,5 @@
-import { UserRepository } from "../../repositories/user.repository";
-import { PasswordHasher } from "../../adapters/password-hasher.adapter";
+import { UserRepository } from "../../repositories";
+import { PasswordHasher } from "../../adapters";
 import { UpdateProfileDto } from "../../dtos/users";
 import { UserEntity } from "../../entities/users";
 import { CustomError } from "../../errors/custom.error";

@@ -1,6 +1,6 @@
-import { CustomError } from "../../errors/custom.error";
+import { CustomError } from '../../errors/custom.error';
 
-export interface ConfirmationEntityOptions{
+export interface ConfirmationCodeEntityOptions {
     id: string;
     userId: string;
     code: string;
@@ -8,25 +8,34 @@ export interface ConfirmationEntityOptions{
 }
 
 export class ConfirmationCodeEntity {
-    constructor(
-        public id: string,
-        public userId: string,
-        public code: string,
-        public expiresAt: Date,
-    ) {}
+    public readonly id: string;
+    public readonly userId: string;
+    public readonly code: string;
+    public readonly expiresAt: Date;
 
-    static create(options: ConfirmationEntityOptions): ConfirmationCodeEntity {
+    constructor(options: ConfirmationCodeEntityOptions) {
+        this.id = options.id;
+        this.userId = options.userId;
+        this.code = options.code;
+        this.expiresAt = options.expiresAt;
+    }
 
-        if(!options.id) throw CustomError.internalServer('El id es requerido');
-        if(!options.userId) throw CustomError.internalServer('El id del usuario es requerido');
-        if(!options.code) throw CustomError.internalServer('El código es requerido');
-        if(!options.expiresAt) throw CustomError.internalServer('La fecha de expiración es requerida');
+    public static fromObject(object: Record<string, any>): ConfirmationCodeEntity {
+        const { id, _id, userId, user, code, expiresAt } = object;
 
-        return new ConfirmationCodeEntity(
-            options.id,
-            options.userId,
-            options.code,
-            options.expiresAt,
-        );
+        const entityId = (id || _id)?.toString();
+        const ownerId = (userId || user)?.toString();
+
+        if (!entityId) throw CustomError.internalServer('El id es requerido');
+        if (!ownerId) throw CustomError.internalServer('El id del usuario es requerido');
+        if (!code) throw CustomError.internalServer('El código es requerido');
+        if (!expiresAt) throw CustomError.internalServer('La fecha de expiración es requerida');
+
+        return new ConfirmationCodeEntity({
+            id: entityId,
+            userId: ownerId,
+            code,
+            expiresAt: expiresAt instanceof Date ? expiresAt : new Date(expiresAt),
+        });
     }
 }

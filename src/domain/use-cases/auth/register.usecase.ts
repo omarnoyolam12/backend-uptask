@@ -1,8 +1,6 @@
 import { randomInt } from "crypto";
-import { UserRepository } from "../../repositories/user.repository";
-import { ConfirmationCodeRepository } from "../../repositories/confirmation.code.repository";
-import { PasswordHasher } from "../../adapters/password-hasher.adapter";
-import { EmailSender } from "../../adapters/email-sender.adapter";
+import { UserRepository, ConfirmationCodeRepository } from "../../repositories";
+import { PasswordHasher, EmailSender } from "../../adapters";
 import { RegisterDto } from "../../dtos/auth/register.dto";
 import { UserEntity } from "../../entities/users";
 import { CustomError } from "../../errors/custom.error";

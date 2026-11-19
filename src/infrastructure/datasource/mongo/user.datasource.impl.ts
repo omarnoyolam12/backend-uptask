@@ -72,8 +72,13 @@ export class UserMongoDatasourceImpl implements UserDatasource {
         throw new Error("Method not implemented.");
     }
     
-    getCredentialsByEmail(email: string): Promise<UserCredentialsEntity | null> {
-        throw new Error("Method not implemented.");
+    async getCredentialsByEmail(email: string): Promise<UserCredentialsEntity | null> {
+        const user = await UserModel.findOne({ email }).select('+password').lean();
+        if (!user) {
+            return null;
+        }
+
+        return UserCredentialsEntity.fromObject(user);
     }
     
     async getCredentialsById(id: string): Promise<UserCredentialsEntity> {
@@ -111,8 +116,22 @@ export class UserMongoDatasourceImpl implements UserDatasource {
         throw new Error("Method not implemented.");
     }
     
-    markAsConfirmed(id: string): Promise<UserEntity> {
-        throw new Error("Method not implemented.");
+    async markAsConfirmed(id: string): Promise<UserEntity> {
+        if (!isValidObjectId(id)) {
+            throw CustomError.badRequest("ID de usuario no válido");
+        }
+
+        const user = await UserModel.findByIdAndUpdate(
+            id,
+            { $set: { isConfirmed: true } },
+            { new: true }
+        ).lean();
+
+        if (!user) {
+            throw CustomError.notFound("Usuario no encontrado");
+        }
+
+        return UserEntity.fromObject(user);
     }
 
 }
