@@ -4,7 +4,7 @@ import { ConfirmationCodeModel } from "../../../data/mongo/models/confirmation-c
 import { ConfirmationCodeEntity } from "../../../domain/entities/auth/confirmation-code.entity";
 import { CustomError } from "../../../domain/errors/custom.error";
 
-export class ConfirmationCodeDatasourceImpl implements ConfirmationCodeDatasource {
+export class ConfirmationCodeMongoDatasourceImpl implements ConfirmationCodeDatasource {
     async save(userId: string, code: string, expiresAt: Date): Promise<ConfirmationCodeEntity> {
         if (!isValidObjectId(userId)) {
             throw CustomError.badRequest("ID de usuario no válido");

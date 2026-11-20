@@ -1,24 +1,37 @@
 import { Router } from "express";
-import { UserMongoDatasourceImpl } from "../../../infrastructure/datasource/mongo/user.datasource.impl"
+
+import { UserMongoDatasourceImpl, RefreshTokenMongoDatasourceImpl } from "../../../infrastructure/datasource/mongo"
+import { UserRepositoryImpl, RefreshTokenRepositoryImpl } from "../../../infrastructure/repository";
 import { UserController } from "./controller";
-import { AuthMiddleware } from "../../middlewares/auth.middleware";
-import { BcryptPasswordHasher, JoseTokenSigner } from "../../../infrastructure/adapters";
-import { envs } from "../../../config/envs";
+import { PasswordHasher, TokenSigner, RefreshTokenGenerator } from "../../../domain/adapters";
 
 export class UserRoutes {
-    static get routes(): Router {
+    static routes(
+        passwordHasher: PasswordHasher, 
+        tokenSigner: TokenSigner,
+        refreshTokenGenerator: RefreshTokenGenerator,
+    ): Router {
         const router = Router();
 
-        const token = new JoseTokenSigner({secret: envs.JWT_SECRET});
-        const authMiddleware = new AuthMiddleware(token);
+        const userDatasource = new UserMongoDatasourceImpl();
+        const userRepository = new UserRepositoryImpl(userDatasource);
 
-        const datasource = new UserMongoDatasourceImpl();
-        const passwordHasher = new BcryptPasswordHasher();
-        const controller = new UserController(datasource, passwordHasher);
+        const refreshTokenDatasource = new RefreshTokenMongoDatasourceImpl();
+        const refreshTokenRepository = new RefreshTokenRepositoryImpl(refreshTokenDatasource);
 
-        router.get('/me', authMiddleware.validateJWT, controller.getProfile);
-        router.put('/me', authMiddleware.validateJWT, controller.updateProfile);
-        router.put('/search', authMiddleware.validateJWT, controller.searchUser);
+        
+        const controller = new UserController({
+            userRepository: userRepository,
+            refreshTokenRepository: refreshTokenRepository,
+            passwordHasher: passwordHasher,
+            tokenSigner: tokenSigner,
+            refreshTokenGenerator: refreshTokenGenerator
+        });
+
+        router.get('/me', controller.getProfile);
+        router.put('/me', controller.updateProfile);
+        router.put('/me/password', controller.changePassword)
+        router.put('/search/:query', controller.searchUser);
 
         return router;
     }

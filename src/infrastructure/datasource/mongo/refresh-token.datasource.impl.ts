@@ -4,7 +4,7 @@ import { RefreshTokenModel } from "../../../data/mongo/models/refresh-token.mode
 import { RefreshTokenEntity } from "../../../domain/entities/auth/refresh-token.entity";
 import { CustomError } from "../../../domain/errors/custom.error";
 
-export class RefreshTokenDatasourceImpl implements RefreshTokenDatasource {
+export class RefreshTokenMongoDatasourceImpl implements RefreshTokenDatasource {
     async save(userId: string, tokenHash: string, expiresAt: Date): Promise<RefreshTokenEntity> {
         if (!isValidObjectId(userId)) {
             throw CustomError.badRequest("ID de usuario no válido");

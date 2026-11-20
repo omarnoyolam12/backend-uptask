@@ -112,8 +112,19 @@ export class UserMongoDatasourceImpl implements UserDatasource {
         return UserEntity.fromObject(updatedUser);
     }
     
-    updatePassword(id: string, passwordHash: string): Promise<void> {
-        throw new Error("Method not implemented.");
+    async updatePassword(id: string, passwordHash: string): Promise<void> {
+        if (!isValidObjectId(id)) {
+            throw CustomError.badRequest("ID de usuario no válido");
+        }
+
+        const updatedUser = await UserModel.findByIdAndUpdate(
+            id,
+            { $set: { password: passwordHash } }
+        ).lean();
+
+        if (!updatedUser) {
+            throw CustomError.notFound("Usuario no encontrado");
+        }
     }
     
     async markAsConfirmed(id: string): Promise<UserEntity> {
