@@ -1,6 +1,5 @@
 import { isValidObjectId } from "mongoose";
 import { UserModel } from "../../../data/mongo/models/user.model";
-import { PasswordHasher } from "../../../domain/adapters/password-hasher.adapter";
 
 import { UserDatasource } from "../../../domain/datasources/user.datasource";
 import { CreateUserDto, SearchUserDto, UpdateProfileDto } from "../../../domain/dtos/users";
@@ -11,11 +10,18 @@ import { CustomError } from "../../../domain/errors/custom.error";
 export class UserMongoDatasourceImpl implements UserDatasource {
 
     constructor(
-        private readonly passwordHasher: PasswordHasher,
     ){}
 
-    create(dto: CreateUserDto): Promise<UserEntity> {
-        throw new Error("Method not implemented.");
+    async create(dto: CreateUserDto): Promise<UserEntity> {
+
+        const user = await UserModel.create({
+            name: dto.name,
+            username: dto.username,
+            email: dto.email,
+            password: dto.password,
+        });
+
+        return UserEntity.fromObject(user);
     }
     
     async getById(id: string): Promise<UserEntity> {
@@ -66,8 +72,13 @@ export class UserMongoDatasourceImpl implements UserDatasource {
         throw new Error("Method not implemented.");
     }
     
-    getCredentialsByEmail(email: string): Promise<UserCredentialsEntity | null> {
-        throw new Error("Method not implemented.");
+    async getCredentialsByEmail(email: string): Promise<UserCredentialsEntity | null> {
+        const user = await UserModel.findOne({ email }).select('+password').lean();
+        if (!user) {
+            return null;
+        }
+
+        return UserCredentialsEntity.fromObject(user);
     }
     
     async getCredentialsById(id: string): Promise<UserCredentialsEntity> {
@@ -75,7 +86,7 @@ export class UserMongoDatasourceImpl implements UserDatasource {
             throw CustomError.badRequest("ID de usuario no válido");
         }
 
-        const user = await UserModel.findById(id).lean();
+        const user = await UserModel.findById(id).select('+password').lean();
         if (!user) {
             throw CustomError.notFound("Usuario no encontrado");
         }
@@ -84,25 +95,8 @@ export class UserMongoDatasourceImpl implements UserDatasource {
     }
     
     async update(dto: UpdateProfileDto): Promise<UserEntity> {
-        if(dto.values.email) {
-            const credentials = await this.getCredentialsById(dto.id);
-            const valid = await this.passwordHasher.compare(dto.currentPassword!, credentials.password);
-            
-            if(!valid) {
-                throw CustomError.unauthorized("Credenciales inválidas");
-            }
-
-            const found = await this.findByEmail(dto.values.email);
-            if(found) {
-                throw CustomError.badRequest("Email ya registrado");
-            }
-        }
-
-        if(dto.values.username) {
-            const found = await this.findByUsername(dto.values.username);
-            if(found) {
-                throw CustomError.badRequest("Nombre de usuario ya registrado");
-            }
+        if (!isValidObjectId(dto.id)) {
+            throw CustomError.badRequest("ID de usuario no válido");
         }
 
         const updatedUser = await UserModel.findByIdAndUpdate(
@@ -111,15 +105,44 @@ export class UserMongoDatasourceImpl implements UserDatasource {
             { new: true }
         ).lean();
 
-        return UserEntity.fromObject(updatedUser!);
+        if (!updatedUser) {
+            throw CustomError.notFound("Usuario no encontrado");
+        }
+
+        return UserEntity.fromObject(updatedUser);
     }
     
-    updatePassword(id: string, passwordHash: string): Promise<void> {
-        throw new Error("Method not implemented.");
+    async updatePassword(id: string, passwordHash: string): Promise<void> {
+        if (!isValidObjectId(id)) {
+            throw CustomError.badRequest("ID de usuario no válido");
+        }
+
+        const updatedUser = await UserModel.findByIdAndUpdate(
+            id,
+            { $set: { password: passwordHash } }
+        ).lean();
+
+        if (!updatedUser) {
+            throw CustomError.notFound("Usuario no encontrado");
+        }
     }
     
-    markAsConfirmed(id: string): Promise<UserEntity> {
-        throw new Error("Method not implemented.");
+    async markAsConfirmed(id: string): Promise<UserEntity> {
+        if (!isValidObjectId(id)) {
+            throw CustomError.badRequest("ID de usuario no válido");
+        }
+
+        const user = await UserModel.findByIdAndUpdate(
+            id,
+            { $set: { isConfirmed: true } },
+            { new: true }
+        ).lean();
+
+        if (!user) {
+            throw CustomError.notFound("Usuario no encontrado");
+        }
+
+        return UserEntity.fromObject(user);
     }
 
 }

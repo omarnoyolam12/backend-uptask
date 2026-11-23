@@ -1,24 +1,31 @@
 import { Resend } from 'resend';
 import { EmailSender, SendEmailOptions } from '../../domain/adapters/email-sender.adapter';
+import { confirmationCodeTemplate } from '../email/templates/confirmation-code.template';
+import { resendConfirmationCodeTemplate } from '../email/templates/resend-confirmation-code.template';
 
 export interface ResendEmailSenderOptions {
     apiKey: string;
     from: string;
+    devRedirectTo?: string;
 }
 
 export class ResendEmailSender implements EmailSender {
     private readonly resend: Resend;
     private readonly from: string;
+    private readonly devRedirectTo?: string;
 
-    constructor({ apiKey, from }: ResendEmailSenderOptions) {
+    constructor({ apiKey, from, devRedirectTo }: ResendEmailSenderOptions) {
         this.resend = new Resend(apiKey);
         this.from = from;
+        this.devRedirectTo = devRedirectTo;
     }
 
     async send({ to, subject, html }: SendEmailOptions): Promise<void> {
+        const recipient = this.devRedirectTo ?? to;
+
         const { error } = await this.resend.emails.send({
             from: this.from,
-            to,
+            to: recipient,
             subject,
             html,
         });
@@ -26,6 +33,26 @@ export class ResendEmailSender implements EmailSender {
         if (error) {
             throw new Error(`Failed to send email: ${error.message}`);
         }
+    }
+
+    async sendConfirmationEmail(to: string, name: string, code: string): Promise<void> {
+        const html = confirmationCodeTemplate({ name, code });
+
+        await this.send({
+            to,
+            subject: 'Confirma tu cuenta en UpTask',
+            html,
+        });
+    }
+
+    async sendResendConfirmationEmail(to: string, name: string, code: string): Promise<void> {
+        const html = resendConfirmationCodeTemplate({ name, code });
+
+        await this.send({
+            to,
+            subject: 'Tu nuevo código de confirmación - UpTask',
+            html,
+        });
     }
 }
 
