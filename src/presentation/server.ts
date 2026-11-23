@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
 import type { Server as HttpServer } from 'http';
+import cookieParser from 'cookie-parser';
 import colors from 'colors';
 
 interface Options {
@@ -24,9 +25,8 @@ export class Server {
 
         // *Middelware-----------------------------------------
         this.app.use(express.json());
-
-        // *x-www-form-urlencoded------------------------------
         this.app.use(express.urlencoded({ extended: true }));
+        this.app.use(cookieParser());
         
         // *Routes--------------------------------------------
         this.app.use('/api', this.routes);

@@ -4,7 +4,7 @@ import { UserRepository, ConfirmationCodeRepository, RefreshTokenRepository } fr
 import { RegisterDto, ConfirmAccountDto, ResendConfirmationDto, LoginDto, RefreshSessionDto, LogoutDto } from "../../../domain/dtos/auth";
 import { Register, ConfirmAccount, ResendConfirmation, Login, RefreshSession, Logout } from "../../../domain/use-cases/auth";
 import { PasswordHasher, EmailSender, TokenSigner, RefreshTokenGenerator } from "../../../domain/adapters";
-import { handleError } from "../../helpers/handle-error";
+import { handleError, REFRESH_TOKEN_COOKIE_NAME, refreshTokenCookieOptions } from "../../helpers";
 
 interface AuthControllerDependecies {
     userRepository: UserRepository
@@ -55,7 +55,7 @@ export class AuthController {
                 message: "Usuario registrado exitosamente",
                 data: user
             }))
-            .catch(error => handleError(error, res));
+            .catch(error => handleError(res, error));
     }
 
     public confirmAccount = (req: Request, res: Response) => {
@@ -73,7 +73,7 @@ export class AuthController {
                 message: "Cuenta confirmada exitosamente",
                 data: user
             }))
-            .catch(error => handleError(error, res));
+            .catch(error => handleError(res, error));
     }
 
     public resendConfirmation = (req: Request, res: Response) => {
@@ -92,7 +92,7 @@ export class AuthController {
                 message: "Código de confirmación reenviado exitosamente",
                 data: user
             }))
-            .catch(error => handleError(error, res));
+            .catch(error => handleError(res, error));
     }
 
     public login = (req: Request, res: Response) => {
@@ -107,17 +107,22 @@ export class AuthController {
             this.refreshTokenGenerator,
         )
             .execute(loginDto!)
-            .then(user => res.json({
-                success: true,
-                status: 200,
-                message: "Usuario logueado exitosamente",
-                data: user
-            }))
-            .catch(error => handleError(error, res));
+            .then(({ refreshToken, accessToken, user }) => {
+                res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, refreshTokenCookieOptions);
+                return res.status(200).json({
+                    success: true,
+                    status: 200,
+                    message: "Usuario logueado exitosamente",
+                    data: { accessToken, user },
+                });
+            })
+            .catch(error => handleError(res, error));
     }
 
     public refreshSession = (req: Request, res: Response) => {
-        const [error, refreshSessionDto] = RefreshSessionDto.create(req.body);
+        const [error, refreshSessionDto] = RefreshSessionDto.create({
+            refreshToken: req.cookies?.[REFRESH_TOKEN_COOKIE_NAME],
+        });
         if(error) return res.status(400).json({error});
 
         new RefreshSession(
@@ -127,17 +132,22 @@ export class AuthController {
             this.refreshTokenGenerator,
         )
             .execute(refreshSessionDto!)
-            .then(user => res.json({
-                success: true,
-                status: 200,
-                message: "Sesión actualizada exitosamente",
-                data: user
-            }))
-            .catch(error => handleError(error, res));
+            .then(({ refreshToken, accessToken, user }) => {
+                res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, refreshTokenCookieOptions);
+                return res.status(200).json({
+                    success: true,
+                    status: 200,
+                    message: "Sesión actualizada exitosamente",
+                    data: { accessToken, user },
+                });
+            })
+            .catch(error => handleError(res, error));
     }  
 
     public logout = (req: Request, res: Response) => {
-        const [error, logoutDto] = LogoutDto.create(req.body);
+        const [error, logoutDto] = LogoutDto.create({
+            refreshToken: req.cookies?.[REFRESH_TOKEN_COOKIE_NAME],
+        });
         if(error) return res.status(400).json({error});
 
         new Logout(
@@ -145,11 +155,15 @@ export class AuthController {
             this.refreshTokenGenerator
         )
             .execute(logoutDto!)
-            .then(() => res.json({
-                success: true,
-                status: 200,
-                message: "Sesión cerrada exitosamente",
-            }))
-            .catch(error => handleError(error, res));
+            .then(() => {
+                res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, refreshTokenCookieOptions);
+
+                return res.status(200).json({
+                    success: true,
+                    status: 200,
+                    message: "Sesión cerrada exitosamente",
+                });
+            })
+            .catch(error => handleError(res, error));
     }  
 }

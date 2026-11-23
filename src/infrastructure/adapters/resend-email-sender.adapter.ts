@@ -6,21 +6,26 @@ import { resendConfirmationCodeTemplate } from '../email/templates/resend-confir
 export interface ResendEmailSenderOptions {
     apiKey: string;
     from: string;
+    devRedirectTo?: string;
 }
 
 export class ResendEmailSender implements EmailSender {
     private readonly resend: Resend;
     private readonly from: string;
+    private readonly devRedirectTo?: string;
 
-    constructor({ apiKey, from }: ResendEmailSenderOptions) {
+    constructor({ apiKey, from, devRedirectTo }: ResendEmailSenderOptions) {
         this.resend = new Resend(apiKey);
         this.from = from;
+        this.devRedirectTo = devRedirectTo;
     }
 
     async send({ to, subject, html }: SendEmailOptions): Promise<void> {
+        const recipient = this.devRedirectTo ?? to;
+
         const { error } = await this.resend.emails.send({
             from: this.from,
-            to,
+            to: recipient,
             subject,
             html,
         });

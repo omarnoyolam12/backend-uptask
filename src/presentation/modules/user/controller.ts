@@ -5,6 +5,7 @@ import { SearchUserDto, UpdateProfileDto, ChangePasswordDto } from "../../../dom
 import { GetProfile, UpdateProfile, SearchUsers, ChangePassword } from "../../../domain/use-cases/users";
 import { PasswordHasher, TokenSigner, RefreshTokenGenerator } from "../../../domain/adapters";
 import { handleError } from "../../helpers/handle-error";
+import { REFRESH_TOKEN_COOKIE_NAME, refreshTokenCookieOptions } from "../../helpers";
 
 interface UserControllerDependencies {
     userRepository: UserRepository;
@@ -86,12 +87,15 @@ export class UserController {
             this.refreshTokenGenerator
         )
             .execute(changePasswordDto!)
-            .then(result => res.json({
-                ok: true,
-                status: 200,
-                message: 'Contraseña cambiada correctamente',
-                data: result
-            }))
+            .then(({ refreshToken, accessToken }) => {
+                res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, refreshTokenCookieOptions);
+                return res.status(200).json({
+                    ok: true,
+                    status: 200,
+                    message: "Contraseña cambiada exitosamente",
+                    data: { accessToken },
+                });
+            })
             .catch(error => handleError(res, error));
     }
 }

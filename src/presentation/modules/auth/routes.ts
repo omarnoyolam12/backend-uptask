@@ -34,7 +34,7 @@ export class AuthRoutes {
         });
 
         router.post('/register', authController.register);
-        router.post('/confirm-accout', authController.confirmAccount);
+        router.post('/confirm-account', authController.confirmAccount);
         router.post('/resend-confimation', authController.resendConfirmation);
         router.post('/login', authController.login);
         router.post('/refresh', authController.refreshSession);

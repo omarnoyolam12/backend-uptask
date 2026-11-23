@@ -14,7 +14,8 @@ export class AppRoutes {
         // *Adaptadores-----------------------------------------  
         const emailSender = new ResendEmailSender({
             apiKey: envs.EMAIL_API_KEY,
-            from: 'omar.noyolam12@gmail.com'
+            from: 'UpTask <onboarding@resend.dev>',
+            ...(envs.NODE_ENV !== 'production' ? { devRedirectTo: 'omar.noyolam12@gmail.com' } : {}),
         });
         const passwordHasher = new BcryptPasswordHasher();
         const tokenSigner = new JoseTokenSigner({ secret: envs.JWT_SECRET });

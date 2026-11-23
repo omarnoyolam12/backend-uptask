@@ -3,6 +3,7 @@ import { TokenSigner } from '../../domain/adapters';
 import { handleError } from '../helpers/handle-error';
 
 declare global {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace Express {
         interface Request {
             userId?: string;
